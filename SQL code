@@ -1,0 +1,216 @@
+-- Creating database
+
+CREATE DATABASE indian_crop;
+
+-- Creating table
+CREATE TABLE mytable 
+		(state_name VARCHAR (40),
+		 district_name VARCHAR (40),
+		 year int,
+		 season VARCHAR (40),
+		 crop VARCHAR (40),
+		 area DECIMAL,
+		 production DECIMAL
+		);
+
+-- Inserting data to the db
+COPY mytable 
+FROM 'crop_production.csv' 
+CSV HEADER 
+DELIMITER ',' ;
+
+
+--DATA CLEANING
+
+-- Checking for duplicate data or typos
+
+select distinct (state_name) 
+from mytable 
+order by crop;
+
+select distinct (district_name) 
+from mytable 
+order by crop;
+
+select distinct (crop) 
+from mytable 
+order by crop;
+
+-- Updating table with correct data
+UPDATE mytable
+SET crop = 'Arecanut'
+WHERE crop LIKE '%canut%';
+
+UPDATE mytable
+SET crop = 'Peas'
+WHERE crop LIKE '%Pea%' 
+OR crop LIKE '%utter%';
+
+UPDATE mytable
+SET crop = 'Beans'
+WHERE crop LIKE '%Bean%' 
+OR crop LIKE '%bean%';
+
+UPDATE mytable
+SET crop = 'Beans'
+WHERE crop LIKE '%Bean%' 
+OR crop LIKE '%bean%';
+
+UPDATE mytable
+SET crop = 'Snake Gourd'
+WHERE crop = 'Snak Guard' ;
+
+DELETE FROM mytable 
+WHERE crop LIKE '%total%';
+
+UPDATE mytable
+SET crop = 'Cotton'
+WHERE crop = 'Kapas' OR crop LIKE 'Cotton%';
+
+UPDATE mytable
+SET crop = 'Pumpkin'
+WHERE crop = 'Pump Kin';
+
+-- Creating a new column called category to categorize the crops
+
+SELECT *, 
+CASE WHEN (crop = 'Apple' OR
+		crop = 'Banana' OR
+		crop = 'Ber' OR
+		crop = 'Citrus Fruit' OR
+		crop = 'Grapes' OR
+		crop = 'Jack Fruit' OR
+		crop = 'Lemon' OR
+		crop = 'Litchi' OR
+		crop = 'Mango' OR
+		crop = 'Orange' OR
+		crop = 'Papaya' OR
+		crop = 'Pinapple' OR
+		crop = 'Plum' OR
+		crop = 'Sapota' OR
+		crop = 'Pomegranate' OR
+		crop = 'Watermelon' )
+	THEN 'Fruits'
+	WHEN (crop = 'Arhar/Tur' OR
+		crop LIKE '%gram' OR
+		crop = 'Gram' OR
+		crop = 'Khesari' OR
+		crop = 'Lentil' OR
+		crop = 'Masoor' OR
+		crop = 'Moong(Green Gram)' OR
+		crop = 'Other  Rabi pulses' OR
+		crop = 'Other Kharif pulses' OR
+		crop = 'other misc. pulses' OR
+		crop = 'Urad' )
+	THEN 'Pulses'
+	WHEN (crop LIKE '%Gourd%' OR
+		crop = 'Beans' OR
+		crop LIKE 'Beet%' OR
+		crop LIKE '%uard%' OR
+		crop = 'Bhindi' OR
+		crop = 'Brinjal' OR
+		crop = 'Cabbage' OR
+		crop = 'Carrot' OR
+		crop = 'Cauliflower' OR
+		crop = 'Colocosia' OR
+		crop = 'Cucumber' OR
+		crop = 'Drum Stick' OR
+		crop = 'Redish' OR
+		crop = 'Lab-Lab' OR
+		crop = 'Mesta' OR
+		crop = 'Onion' OR
+		crop = 'Other Vegetables' OR
+		crop = 'Pumpkin' OR
+		crop LIKE '%otato%' OR
+		crop = 'Tomato' OR
+		crop = 'Vagaru' OR
+		crop = 'Yam' )
+	THEN 'Vegatables'
+	WHEN (crop = 'Bajra' OR
+		crop = 'Korra' OR
+		crop = 'Jowar' OR
+		crop = 'Mesta' OR
+		crop = 'Other Cereals & Millets' OR
+		crop = 'Barley' OR
+		crop = 'Jobster' OR
+		crop = 'Perilla' OR
+		crop = 'Ragi' OR
+		crop = 'Rice' OR
+		crop = 'Small millets' OR
+		crop = 'Maize' OR
+		crop = 'Wheat' )
+	THEN 'Cereals and Millets'
+	WHEN (crop LIKE '%nut' OR
+		crop = 'Other Dry Fruit')
+	THEN 'Dry Fruits'
+	WHEN (crop = 'Black pepper' OR
+		crop = 'Cardamom' OR
+		crop LIKE 'Dry%' OR
+		crop = 'Garlic' OR
+		crop = 'Ginger' OR
+		crop = 'Turmeric' OR
+		crop = 'Coriander' OR
+		crop = 'Cond-spcs other')
+	THEN 'Spices'
+	WHEN (crop LIKE '%seed%' OR
+		 crop = 'Sunflower' OR
+		crop = 'Safflower' 
+		 )
+	THEN 'Oilseeds'
+	WHEN ( crop = 'Tea'
+		)
+	THEN 'Tea'
+	WHEN ( crop = 'Coffee'
+		)
+	THEN 'Coffee'
+	WHEN ( crop = 'Cotton' OR
+		crop = 'Jute' OR
+		crop = 'other fibres' OR
+		crop = 'Tobacco' OR
+		crop = 'Turnip' OR
+		crop = 'Rubber'
+		)
+	THEN 'Value Crops'
+	ELSE 'Others'
+END AS 'Crop Category'
+FROM mytable;
+
+-- checking production and area data
+select max(area) AS area, 
+max(production) AS maxprod 
+from mytable;
+
+-- Wrong data present in coconut section so filled it with area* avg productivity of coconut in india
+update mytableset production = round(area*1316.24,2)
+WHERE CROP = 'Coconut' ;
+
+-- fixing production of coconuts
+update mytableset production = ROUND(production/1000,2)
+WHERE crop = 'Coconut' AND production > 1000;
+UPDATE mytable SET production = (ROUND(PRODUCTION / 100000,2) )
+WHERE crop = 'Coconut' AND production > 1000000.00 ;
+
+update mytable set production = (ROUND(PRODUCTION / 1000,2) )
+WHERE CROP = 'Coconut' AND production < 1000.00  AND area < 100;
+update mytableset production = production*1000
+WHERE CROP = 'Coconut' AND production >10000  AND area > 10000;
+
+
+-- Missed values in category section
+UPDATE mytableSET category = 'Cereals and Millets' WHERE crop = 'Total foodgrain';
+
+-- Fixing typo
+UPDATE mytable SET category = 'Vegetables' WHERE category = 'Vegatables';
+
+-- Fixing production of sugarcane
+UPDATE mytable SET production = ROUND(production/10,2) WHERE crop = 'Sugarcane';
+
+-- removing spaces in columns
+CREATE TABLE cropdata1 AS(
+SELECT 
+TRIM(state_name) AS state_name, TRIM(district_name) AS district_name, year, TRIM(SEASON) AS season, 
+TRIM(crop) AS crop, category, area, production 
+FROM cropdata);
+
+-- Exporting to CSV
+COPY (SELECT * FROM cropdata1) TO 'E:\CLG\Data analytics\Ineuon\Projects\Indian Crop\crop.csv' CSV HEADER;
